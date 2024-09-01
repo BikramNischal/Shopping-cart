@@ -1,16 +1,19 @@
+import {Schema, model} from "mongoose";
 
-export default class Product {
+export interface IProduct {
     id: number;
-    title: string;
+    name: string;
     details: string;
     price: number;
-    stock: number;
+};
 
-    constructor(id: number, title: string, details: string, price:number, stock: number){
-        this.id = id;
-        this.title = title;
-        this.details = details;
-        this.price = price;
-        this.stock = stock;
-    }
-}
+
+const productSchema = new Schema<IProduct>({
+    id: {type: Number, required: true},
+    name: {type: String, required: true},
+    details: {type: String},
+    price: {type: Number, required: true }
+});
+
+export const Product =  model<IProduct>("Product", productSchema);
+
