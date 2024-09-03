@@ -10,7 +10,6 @@ export async function product (req: Request, res: Response) {
 
 // returns product details for :productId
 export async function productDetail (req: Request, res: Response) {
-	console.log(req.params.productId);
 	const product = await Product.findOne({ id: req.params.productId }).exec();
 	if (product) {
 		res.json(product);

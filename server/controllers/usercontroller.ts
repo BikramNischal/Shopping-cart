@@ -11,6 +11,7 @@ export async function createUser(req: Request, res: Response) {
 		const newUser = new User({
 			id: userCount + 1,
 			name: req.body.username,
+			passwd: req.body.passwd,
 			cartId: newUserCart._id,
 			checkouts: [],
 		});
@@ -18,7 +19,9 @@ export async function createUser(req: Request, res: Response) {
 		// save db changes
 		await newUserCart.save();
 		await newUser.save();
-		console.log("User Created");
+
+		res.cookie("userId", newUser.id);
+
 		res.json(newUser);
 	} else {
 		res.status(400);
@@ -28,18 +31,17 @@ export async function createUser(req: Request, res: Response) {
 
 // delete user with given id
 export async function deleteUser(req: Request, res: Response) {
-	const user = await User.findOne({ id: req.params.userId }).exec();
-	if (user) {
-		// delete cart associated with the user
-		const cart = await Cart.findByIdAndDelete(user.cartId);
-
-		// delete user
-		await User.deleteOne({ id: req.params.userId }).exec();
-
-		res.send(`User ${user.id} deleted`);
-	} else {
-		res.sendStatus(404);
+	if (!req.cookies.userId) {
+		res.status(400).send("User Not Logged In!");
 	}
+
+	const user = await User.findOne({ id: req.cookies.userId }).exec();
+	// delete cart associated with the user
+	const cart = await Cart.findByIdAndDelete(user?.cartId);
+	// delete user
+	await User.deleteOne({ id: req.cookies.userId }).exec();
+	res.clearCookie("userId");
+	res.send(`User ${user?.id} deleted`);
 }
 
 // get all users
@@ -48,45 +50,85 @@ export async function userList(req: Request, res: Response) {
 	res.json(users);
 }
 
-// checkout
-export async function checkout(req: Request, res: Response) {
-	const user = await User.findOne({ id: req.params.userId }).exec();
+// get user details
+export async function userDetails(req: Request, res: Response) {
+	if (!req.cookies.userId) {
+		res.status(400).send("User Not Logged In!");
+	}
+
+	const user = await User.findOne({ id: req.cookies.userId })
+		.populate("cartId")
+		.populate("checkouts")
+		.exec();
 
 	if (user) {
-		const cart = await Cart.findById(user.cartId).exec();
-
-		if (cart?.products.length) {
-			// insert products into checkout and empty the cart
-			let productId = cart?.products.shift();
-			while (productId) {
-				user.checkouts.push(productId);
-				productId = cart?.products.shift();
-			}
-
-			// save the db changes
-			await user.save();
-			await cart?.save();
-
-			res.send("cart items add to checkout!");
-		} else {
-			res.send("No items in cart to checkout!");
-		}
-
-
+		res.json(user);
 	} else {
-		res.status(404);
-		res.send("User Not Found!");
+		res.status(404).send(`User Id: ${req.cookies.userId} Not Found!`);
 	}
 }
 
-export async function checkoutList(req: Request, res: Response) {
-	const user = await User.findOne({ id: req.params.userId }).exec();
+// user login and add cookie entry for user
+export async function userLogin(req: Request, res: Response) {
+	const user = await User.findOne({ id: req.body.userId }).exec();
 
 	if (user) {
-		const userData = user.populate("checkouts");
-		res.json((await userData).checkouts);
+		if (req.body.passwd === user.passwd) {
+			res.cookie("userId", user.id);
+			res.send("Login Successful!");
+		} else {
+			res.status(400).send("Incorrect password!");
+		}
 	} else {
-		res.status(404);
-		res.send("User Not Found!");
+		res.status(404).send(`User Id: ${req.body.userId} Not Found!`);
 	}
+}
+
+// delete cookies entry
+export async function userLogout(req: Request, res: Response) {
+	if (req.cookies.userId) {
+		res.clearCookie("userId");
+		res.send("Logout Successful");
+	} else {
+		res.status(400).send("User Not Logged In!");
+	}
+}
+
+// add all items in cart to checkouts and empty cart
+export async function checkout(req: Request, res: Response) {
+	if (!req.cookies.userId) {
+		res.status(400).send("User Not Logged In!");
+	}
+
+	const user = await User.findOne({ id: req.cookies.userId }).exec();
+	const cart = await Cart.findById(user?.cartId).exec();
+
+	if (cart?.products.length) {
+		// insert products into checkout and empty the cart
+		let productId = cart?.products.shift();
+		while (productId) {
+			user?.checkouts.push(productId);
+			productId = cart?.products.shift();
+		}
+
+		// save the db changes
+		await user?.save();
+		await cart?.save();
+
+		res.send("cart items add to checkout!");
+	} else {
+		res.send("No items in cart to checkout!");
+	}
+}
+
+// return a detail list of all products in checkouts
+export async function checkoutList(req: Request, res: Response) {
+	if (!req.cookies.userId) {
+		res.status(400).send("User Not Logged In!");
+	}
+
+	const user = await User.findOne({ id: req.cookies.userId })
+		.populate("checkouts")
+		.exec();
+	res.json(user?.checkouts);
 }

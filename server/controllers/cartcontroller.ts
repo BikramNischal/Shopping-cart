@@ -4,19 +4,21 @@ import { Cart } from "../models/cart";
 import { Product } from "../models/product";
 
 // return cart list
-export async function cartList(req: Request, res: Response) {
-	const user = await User.findOne({ id: req.params.userId }).exec();
-	if(user){
-		const cart = await Cart.findById(user?.cartId).populate("products").exec();
-		res.json(cart);
-	} else {
-		res.status(404);
-		res.send("User Not Found!");
+export async function cartList(req: Request, res: Response) {	
+	if (!req.cookies.userId) {
+		res.status(400).send("User Not Logged In!");
 	}
+	const user = await User.findOne({ id: req.cookies.userId }).exec();
+		const cart = await Cart.findById(user?.cartId).populate("products").exec();
+		res.json(cart?.products);
 }
 
 export async function addToCart(req: Request, res: Response) {
-	const user = await User.findOne({ id: req.params.userId }).exec();
+	if (!req.cookies.userId) {
+		res.status(400).send("User Not Logged In!");
+	}
+
+	const user = await User.findOne({ id: req.cookies.userId }).exec();
 	const product = await Product.findOne({ id: req.body.productId }).exec();
 
 	if (user && product) {
@@ -34,7 +36,12 @@ export async function addToCart(req: Request, res: Response) {
 }
 
 export async function removeFromCart(req: Request, res: Response) {
-	const user = await User.findOne({ id: req.params.userId }).exec();
+
+	if (!req.cookies.userId) {
+		res.status(400).send("User Not Logged In!");
+	}
+
+	const user = await User.findOne({ id: req.cookies.userId }).exec();
 	const product = await Product.findOne({ id: req.params.productId }).exec();
 
 	if (user && product) {
@@ -44,8 +51,7 @@ export async function removeFromCart(req: Request, res: Response) {
 		if(index >= 0){
 			cart?.products.splice(index,1);
 			await cart?.save();
-			res.status(200);
-			res.json(cart);	
+			res.send(`Product Id: ${product.id} Removed From Cart`);
 		} else {
 			res.status(400);
 			res.send("No such product on cart");

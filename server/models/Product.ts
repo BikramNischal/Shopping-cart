@@ -9,7 +9,7 @@ export interface IProduct {
 
 
 const productSchema = new Schema<IProduct>({
-    id: {type: Number, required: true},
+    id: {type: Number, required: true, unique: true},
     name: {type: String, required: true},
     details: {type: String},
     price: {type: Number, required: true }

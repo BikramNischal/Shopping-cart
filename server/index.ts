@@ -3,8 +3,9 @@ import express, {Express, Request, Response} from "express";
 import mongoose from "mongoose";
 
 import {product, productDetail} from "./controllers/productcontroller";
-import { checkout, checkoutList, createUser, deleteUser, userList } from "./controllers/usercontroller";
+import { checkout, checkoutList, createUser, deleteUser, userDetails, userList, userLogin, userLogout } from "./controllers/usercontroller";
 import bodyParser from "body-parser";
+import cookieParser from "cookie-parser";
 import { addToCart, cartList, removeFromCart} from "./controllers/cartcontroller";
 
 
@@ -17,7 +18,6 @@ async function dbConnection() {
     await mongoose.connect(dburl);
     console.log("connected successfully!");
 }
-
 dbConnection().catch( err => console.error(err));
 
 
@@ -25,6 +25,7 @@ const app: Express =  express();
 
 app.use(bodyParser.urlencoded());
 app.use(bodyParser.json());
+app.use(cookieParser());
 
 app.get("/", (req:Request, res: Response) => {
     res.send("Hello World");
@@ -32,39 +33,35 @@ app.get("/", (req:Request, res: Response) => {
 
 
 // Product routing 
-// get product list 
 app.get("/products/", product);
 
-// get product details 
 app.get("/products/:productId", productDetail);
 
 
 // user routing
-// get all users
-app.get("/user", userList);
+app.get("/users", userList);
 
-// create user for give req.body.username
-app.post("/user",  createUser);
+app.get("/user/logout", userLogout);
 
-// delete user
-app.delete("/user/:userId", deleteUser);
+app.get("/user", userDetails);
+
+app.post("/user/create",  createUser);
+
+app.delete("/user/delete", deleteUser);
+
+app.post("/user/login", userLogin);
 
 
 // cart routing
-//get cart list 
-app.get("/user/:userId/cart", cartList);
+app.get("/user/cart", cartList);
 
-// add to cart 
-app.post("/user/:userId/cart/add", addToCart);
+app.post("/user/cart/add", addToCart);
 
-// remove item from cart 
-app.delete("/user/:userId/cart/:productId", removeFromCart);
+app.delete("/user/cart/:productId", removeFromCart);
 
-// checkout products list
-app.get("/user/:userId/cart/checkout", checkoutList);
+app.get("/user/checkout", checkoutList);
 
-// checkout
-app.post("/user/:userId/cart/checkout", checkout);
+app.post("/user/cart/checkout", checkout);
 
 app.listen(port , () => {
     console.log(`Listening to port: ${port}`);

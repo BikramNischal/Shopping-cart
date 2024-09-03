@@ -1,5 +1,4 @@
-import mongoose, { Schema, model, ObjectId } from "mongoose";
-// import { IProduct } from "./product";
+import mongoose, { Schema, model } from "mongoose";
 
 
 export interface ICart{
