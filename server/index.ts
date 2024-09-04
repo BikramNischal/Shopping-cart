@@ -2,11 +2,15 @@ import "dotenv/config";
 import express, {Express, Request, Response} from "express";
 import mongoose from "mongoose";
 
-import {product, productDetail} from "./controllers/productcontroller";
-import { checkout, checkoutList, createUser, deleteUser, userDetails, userList, userLogin, userLogout } from "./controllers/usercontroller";
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
-import { addToCart, cartList, removeFromCart} from "./controllers/cartcontroller";
+import cors from "cors";
+
+import { router } from "./routes/routes";
+
+import swaggerUi from "swagger-ui-express";
+import swaggerOutput from "./utils/swagger_output.json";
+
 
 
 mongoose.set("strictQuery", false);
@@ -23,45 +27,17 @@ dbConnection().catch( err => console.error(err));
 
 const app: Express =  express();
 
+// Middlewares 
 app.use(bodyParser.urlencoded());
 app.use(bodyParser.json());
 app.use(cookieParser());
-
-app.get("/", (req:Request, res: Response) => {
-    res.send("Hello World");
-})
+app.use(cors());
 
 
-// Product routing 
-app.get("/products/", product);
 
-app.get("/products/:productId", productDetail);
+app.use("/", router);
 
-
-// user routing
-app.get("/users", userList);
-
-app.get("/user/logout", userLogout);
-
-app.get("/user", userDetails);
-
-app.post("/user/create",  createUser);
-
-app.delete("/user/delete", deleteUser);
-
-app.post("/user/login", userLogin);
-
-
-// cart routing
-app.get("/user/cart", cartList);
-
-app.post("/user/cart/add", addToCart);
-
-app.delete("/user/cart/:productId", removeFromCart);
-
-app.get("/user/checkout", checkoutList);
-
-app.post("/user/cart/checkout", checkout);
+app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerOutput));
 
 app.listen(port , () => {
     console.log(`Listening to port: ${port}`);

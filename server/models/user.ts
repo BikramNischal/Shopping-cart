@@ -4,15 +4,13 @@ import {ICart} from "./cart";
 export interface IUser{
     name: string;
     passwd: string;
-    id: number;
     cartId: PopulatedDoc<ICart>;
     checkouts: mongoose.Types.ObjectId[];
 };
 
 const userSchema = new Schema<IUser>({
-    id: {type: Number, required: true, unique: true},
     passwd: {type: String, required: true},
-    name: {type: String, required: true},
+    name: {type: String, required: true, unique: true},
     cartId: {type: Schema.Types.ObjectId, ref:"Cart"},
     checkouts:[{type: Schema.Types.ObjectId, ref:"Product"}]
 });

@@ -1,19 +1,26 @@
 import { Product } from "../models/product";
 import { Request, Response } from "express";
 
-
-//returns a list of products 
-export async function product (req: Request, res: Response) {
-	const products = await Product.find().exec();
-	res.json(products);
-};
-
-// returns product details for :productId
-export async function productDetail (req: Request, res: Response) {
-	const product = await Product.findOne({ id: req.params.productId }).exec();
-	if (product) {
-		res.json(product);
-	} else {
-		res.sendStatus(404);
+//returns a list of products
+export default class ProductController {
+	public static async product(req: Request, res: Response) {
+		try {
+			const products = await Product.find().exec();
+			res.json(products);
+		} catch (err) {
+			console.log(err);
+		}
 	}
-};
+
+	// returns product details for :productId
+	public static async productDetail(req: Request, res: Response) {
+		try {
+			const product = await Product.findOne({
+				id: req.params.productId,
+			}).exec();
+			product ? res.json(product) : res.sendStatus(404);
+		} catch (err) {
+			console.error(err);
+		}
+	}
+}
