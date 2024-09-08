@@ -3,7 +3,7 @@ import { Request, Response } from "express";
 
 //returns a list of products
 export default class ProductController {
-	public static async product(req: Request, res: Response) {
+	public static async products(req: Request, res: Response) {
 		try {
 			const products = await Product.find().exec();
 			res.json(products);

@@ -1,29 +1,21 @@
-import swaggerAutogen from "swagger-autogen";
+import swaggerJsdoc from "swagger-jsdoc";
 
-const docs ={
+const options = {
+  definition: {
+    openapi: "3.1.0",
     info: {
-        version: 'v1.0.0',
-        title: 'Swagger Demo Project',
-        description: 'Implementation of Swagger with TypeScript'
+      title: "Shopping Cart API",
+      version: "0.1.0",
+      description:
+        "This is a simple CRUD API application made with Express and documented with Swagger"
     },
     servers: [
-        {
-            url: 'http://localhost:3000',
-            description: ''
-        },
+      {
+        url: "http://localhost:3000",
+      },
     ],
-    components: {
-        securitySchemes: {
-            bearerAuth: {
-                type: 'http',
-                scheme: 'bearer',
-            }
-        }
-    }
-}; 
+  },
+  apis: ["./routes/*.ts"],
+};
 
-const outputFile = "./swagger_output.json";
-const endpointsFiles = ["../routes/routes.ts"];
-
-
-swaggerAutogen({openapi:'3.0.0'})(outputFile,endpointsFiles,docs);
+export const specs = swaggerJsdoc(options);

@@ -69,15 +69,12 @@ export default class CartController {
 					await cart?.save();
 					res.send(`Product Id: ${product.id} Removed From Cart`);
 				} else {
-					res.status(400);
+					res.status(406);
 					res.send("No such product on cart");
 				}
 			} else {
-				const msg = user
-					? `Product with id ${req.params.productId} Not Found`
-					: `User with id ${req.params.userId} Not Found`;
 				res.status(404);
-				res.send(msg);
+				res.send(`Product with id ${req.params.productId} Not Found`);
 			}
 		} catch (err) {
 			console.error(err);
