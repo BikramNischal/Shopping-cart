@@ -1,6 +1,9 @@
 import "dotenv/config";
 import express, { Express, Request, Response } from "express";
 import mongoose from "mongoose";
+import morgan from "morgan";
+import {createStream} from "rotating-file-stream";
+import path from "path";
 
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
@@ -8,11 +11,15 @@ import cors from "cors";
 
 import swaggerUi from "swagger-ui-express";
 import { specs } from "./utils/swagger";
+
+
 import productRouter from "./routes/productsRouter";
 import userRouter from "./routes/userRouter";
 import cartRouter from "./routes/cartRouter";
 
 mongoose.set("strictQuery", false);
+
+
 
 const dburl = process.env.DB_URL as string;
 const port = process.env.PORT;
@@ -25,12 +32,22 @@ dbConnection().catch((err) => console.error(err));
 
 const app: Express = express();
 
-// Middlewares
+// parser middleware
 app.use(bodyParser.urlencoded());
 app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(cors());
 
+// ceate a rotating write stream
+const accessLogStream = createStream('access.log', {
+	interval: '1d',
+	path: path.join(__dirname,'logs')
+});
+
+// morgan config
+app.use(morgan("tiny", {stream: accessLogStream}));
+
+// app routes 
 app.use("/products", productRouter);
 app.use("/user", userRouter);
 app.use("/user/cart", cartRouter);
