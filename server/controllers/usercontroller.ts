@@ -1,6 +1,7 @@
 import { User } from "../models/user";
 import { Cart } from "../models/cart";
 import { Request, Response } from "express";
+import { httpLogger } from "../logger/logger";
 
 export default class UserController {
 	// create user with given name
@@ -23,11 +24,12 @@ export default class UserController {
 				console.error(err);
 			}
 			res.cookie("userId", newUser._id);
-
 			res.json(newUser);
+			httpLogger.log("info", "User Created", { req, res });
 		} else {
 			res.status(400);
 			res.send("username not found");
+			httpLogger.log("error", "username undefined", { req, res });
 		}
 	}
 
@@ -35,6 +37,7 @@ export default class UserController {
 	public static async deleteUser(req: Request, res: Response) {
 		if (!req.cookies.userId) {
 			res.status(400).send("User Not Logged In!");
+			httpLogger.log("error", "User Not Logged In", { req, res });
 		}
 
 		try {
@@ -45,8 +48,10 @@ export default class UserController {
 			await User.findByIdAndDelete(req.cookies.userId).exec();
 			res.clearCookie("userId");
 			res.send(`User ${user?._id} deleted`);
+			httpLogger.log("info", "User Deleted", { req, res });
 		} catch (err) {
-			console.error(err);
+			httpLogger.log("error", (err as Error).message, { req, res });
+			console.log(err);
 		}
 	}
 
@@ -55,8 +60,10 @@ export default class UserController {
 		try {
 			const users = await User.find({}).exec();
 			res.json(users);
+			httpLogger.log("info", "Success", { req, res });
 		} catch (err) {
 			console.error(err);
+			httpLogger.log("error", (err as Error).message, { req, res });
 		}
 	}
 
@@ -64,6 +71,7 @@ export default class UserController {
 	public static async userDetails(req: Request, res: Response) {
 		if (!req.cookies.userId) {
 			res.status(400).send("User Not Logged In!");
+			httpLogger.log("error", "User Not Logged In", { req, res });
 			return;
 		}
 
@@ -73,8 +81,10 @@ export default class UserController {
 				.populate("checkouts")
 				.exec();
 			res.json(user);
+			httpLogger.log("info", "Success", { req, res });
 		} catch (err) {
 			console.error(err);
+			httpLogger.log("error", (err as Error).message, { req, res });
 		}
 	}
 
@@ -86,14 +96,18 @@ export default class UserController {
 				if (req.body.passwd === user.passwd) {
 					res.cookie("userId", user._id);
 					res.send("Login Successful!");
+					httpLogger.log("info", "User Login", { req, res });
 				} else {
 					res.status(400).send("Incorrect password!");
+					httpLogger.log("error", "Incorrect password", { req, res });
 				}
 			} else {
-				res.status(404).send(`User Id: ${req.body.userId} Not Found!`);
+				res.status(404).send(`User: ${req.body.username} Not Found!`);
+				httpLogger.log("error","User Not Found", { req, res });
 			}
 		} catch (err) {
 			console.error(err);
+			httpLogger.log("error", (err as Error).message, { req, res });
 		}
 	}
 
@@ -102,8 +116,10 @@ export default class UserController {
 		if (req.cookies.userId) {
 			res.clearCookie("userId");
 			res.send("Logout Successful");
+			httpLogger.log("info", "User Logout", { req, res });
 		} else {
 			res.status(400).send("User Not Logged In!");
+			httpLogger.log("error", "User Not Logged In", { req, res });
 		}
 	}
 
@@ -111,6 +127,7 @@ export default class UserController {
 	public static async checkout(req: Request, res: Response) {
 		if (!req.cookies.userId) {
 			res.status(400).send("User Not Logged In!");
+			httpLogger.log("error", "User Not Logged In!", { req, res });
 		}
 		try {
 			const user = await User.findById(req.cookies.userId).exec();
@@ -127,13 +144,15 @@ export default class UserController {
 				// save the db changes
 				await user?.save();
 				await cart?.save();
-
 				res.send("cart items add to checkout!");
+				httpLogger.log("info","cart items add to checkout!", { req, res });
 			} else {
 				res.send("No items in cart to checkout!");
+				httpLogger.log("info","No items in cart to checkout!", { req, res });
 			}
 		} catch (err) {
 			console.error(err);
+			httpLogger.log("error", (err as Error).message, { req, res });
 		}
 	}
 
@@ -141,14 +160,17 @@ export default class UserController {
 	public static async checkoutList(req: Request, res: Response) {
 		if (!req.cookies.userId) {
 			res.status(400).send("User Not Logged In!");
+			httpLogger.log("error", "User Not Logged In!", { req, res });
 		}
 		try {
 			const user = await User.findById(req.cookies.userId)
 				.populate("checkouts")
 				.exec();
 			res.json(user?.checkouts);
+			httpLogger.log("info", "Success", { req, res });
 		} catch (err) {
 			console.error(err);
+			httpLogger.log("error", (err as Error).message, { req, res });
 		}
 	}
 }

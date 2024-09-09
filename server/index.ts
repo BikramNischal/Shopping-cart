@@ -47,6 +47,7 @@ const accessLogStream = createStream('access.log', {
 // morgan config
 app.use(morgan("tiny", {stream: accessLogStream}));
 
+
 // app routes 
 app.use("/products", productRouter);
 app.use("/user", userRouter);
