@@ -7,10 +7,6 @@ import { httpLogger } from "../logger/logger";
 // return cart list
 export default class CartController {
 	public static async cartList(req: Request, res: Response) {
-		if (!req.cookies.userId) {
-			res.status(400).send("User Not Logged In!");
-			httpLogger.log("error", "User Not Logged In!", { req, res });
-		}
 		try {
 			const user = await User.findById(req.cookies.userId).exec();
 			const cart = await Cart.findById(user?.cartId)
@@ -24,11 +20,6 @@ export default class CartController {
 	}
 
 	public static async addToCart(req: Request, res: Response) {
-		if (!req.cookies.userId) {
-			res.status(400).send("User Not Logged In!");
-			httpLogger.log("error", "User Not Logged In!", { req, res });
-		}
-
 		try {
 			const user = await User.findById(req.cookies.userId).exec();
 			const product = await Product.findOne({

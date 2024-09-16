@@ -1,72 +1,62 @@
 [
     {
         "id": 1,
-        "name": "product 1",
-        "details": "Product 1 details",
-        "price": 10
-
+        "name": "Apple iPhone 14",
+        "details": "Latest Apple iPhone with A15 Bionic chip, 6.1-inch display, and dual-camera system.",
+        "price": 1100
     },
     {
         "id": 2,
-        "name": "product 2",
-        "details": "Product 2 details",
-        "price": 20
-
+        "name": "Samsung Galaxy S23",
+        "details": "Flagship Samsung smartphone with Snapdragon 8 Gen 2 processor and 120Hz AMOLED display.",
+        "price": 1200
     },
     {
         "id": 3,
-        "name": "product 3",
-        "details": "Product 3 details",
-        "price": 30
-
+        "name": "Sony WH-1000XM5",
+        "details": "Sony's premium noise-canceling wireless headphones with up to 30 hours of battery life.",
+        "price": 350
     },
     {
         "id": 4,
-        "name": "product 4",
-        "details": "Product 4 details",
-        "price": 40
-
+        "name": "Dell XPS 13",
+        "details": "Ultra-thin and lightweight laptop with 13.4-inch FHD+ display and Intel Core i7 processor.",
+        "price": 1400
     },
     {
         "id": 5,
-        "name": "product 5",
-        "details": "Product 5 details",
-        "price": 50
-
+        "name": "Apple MacBook Pro 16",
+        "details": "Powerful Apple laptop with M1 Pro chip, 16-inch Retina display, and 1TB SSD.",
+        "price": 2500
     },
     {
         "id": 6,
-        "name": "product 6",
-        "details": "Product 6 details",
-        "price": 60
-
+        "name": "Bose QuietComfort 45",
+        "details": "High-quality noise-canceling headphones with 24-hour battery life and Bluetooth connectivity.",
+        "price": 329
     },
     {
         "id": 7,
-        "name": "product 7",
-        "details": "Product 7 details",
-        "price": 70
-
+        "name": "Nintendo Switch OLED",
+        "details": "Hybrid gaming console with a 7-inch OLED display and improved audio.",
+        "price": 350
     },
     {
         "id": 8,
-        "name": "product 8",
-        "details": "Product 8 details",
-        "price": 80
-
+        "name": "GoPro HERO11 Black",
+        "details": "Rugged action camera with 5.3K video recording, waterproof design, and stabilization.",
+        "price": 499
     },
     {
         "id": 9,
-        "name": "product 9",
-        "details": "Product 9 details",
-        "price": 90
-
+        "name": "Dyson V15 Detect",
+        "details": "High-end cordless vacuum with laser dust detection and up to 60 minutes of runtime.",
+        "price": 700
     },
     {
         "id": 10,
-        "name": "product 10",
-        "details": "Product 10 details",
-        "price": 100
-
+        "name": "Sony PlayStation 5",
+        "details": "Next-gen gaming console with 825GB SSD, ray tracing, and haptic feedback controllers.",
+        "price": 499
     }
 ]

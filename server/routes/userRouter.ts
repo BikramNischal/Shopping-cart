@@ -1,5 +1,6 @@
 import { Router } from "express";
 import UserController from "../controllers/userController";
+import { validateToken } from "../auth/jwtUtils";
 
 const userRouter = Router();
 
@@ -143,13 +144,15 @@ const userRouter = Router();
 
 
 // user routing
-userRouter.get("/", UserController.userList);
-
 userRouter.post("/create", UserController.createUser);
 
-userRouter.get("/details", UserController.userDetails);
-
 userRouter.post("/login", UserController.userLogin);
+
+userRouter.use(validateToken);
+
+userRouter.get("/", UserController.userList);
+
+userRouter.get("/details", UserController.userDetails);
 
 userRouter.get("/logout", UserController.userLogout);
 

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import UserController from "../controllers/userController";
 import CartController from "../controllers/cartController";
+import { validateToken } from "../auth/jwtUtils";
 
 const cartRouter = Router();
 
@@ -132,7 +133,9 @@ const cartRouter = Router();
  *
  */
 
-cartRouter.get("/", CartController.cartList);
+cartRouter.use(validateToken);
+
+cartRouter.get("/",CartController.cartList);
 
 cartRouter.post("/add", CartController.addToCart);
 
@@ -140,6 +143,6 @@ cartRouter.delete("/delete/:productId", CartController.removeFromCart);
 
 cartRouter.get("/checkout/details", UserController.checkoutList);
 
-cartRouter.post("/checkout", UserController.checkout);
+cartRouter.post("/checkout",UserController.checkout);
 
 export default cartRouter;
