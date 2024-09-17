@@ -1,5 +1,5 @@
 import { Router } from "express";
-import UserController from "../controllers/userController";
+import UserController from "../controllers/usercontroller";
 import { validateToken } from "../auth/jwtUtils";
 
 const userRouter = Router();
