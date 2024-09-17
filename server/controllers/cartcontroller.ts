@@ -7,21 +7,33 @@ import { httpLogger } from "../logger/logger";
 // return cart list
 export default class CartController {
 	public static async cartList(req: Request, res: Response) {
+		const user = await User.findById(req.cookies.userId).exec();
+
 		try {
-			const user = await User.findById(req.cookies.userId).exec();
 			const cart = await Cart.findById(user?.cartId)
 				.populate("products")
 				.exec();
 			res.json(cart?.products);
-			httpLogger.log("info", "Cart List", { req, res });
+
+			httpLogger.log("info", {
+				message: "Success",
+				user: user?.role,
+				req,
+				res,
+			});
 		} catch (err) {
-			console.error(err);
+			httpLogger.log("error", {
+				message: (err as Error).message,
+				req,
+				res,
+				user: user?.role,
+			});
 		}
 	}
 
 	public static async addToCart(req: Request, res: Response) {
+		const user = await User.findById(req.cookies.userId).exec();
 		try {
-			const user = await User.findById(req.cookies.userId).exec();
 			const product = await Product.findOne({
 				id: req.body.productId,
 			}).exec();
@@ -32,27 +44,37 @@ export default class CartController {
 					cart.products.push(product._id);
 					await cart.save();
 					res.send(`product id : ${product.id} is added to cart`);
-					httpLogger.log("info", "Product added", { req, res });
+					httpLogger.log("info", {
+						message: "Product Added To Cart",
+						user: user?.role,
+						req,
+						res,
+					});
 				}
 			} else {
-				res.status(404);
 				const msg = user ? "Product Not Found" : "User Not Found!";
-				res.send(msg);
-				httpLogger.log("error", "User/Product Not Found", { req, res });
+				res.status(404).send(msg);
+
+				httpLogger.log("error", {
+					message: msg,
+					req,
+					res,
+					user: user?.role,
+				});
 			}
 		} catch (err) {
-			console.error(err);
-			httpLogger.log("error", (err as Error).message, { req, res });
+			httpLogger.log("error", {
+				message: (err as Error).message,
+				req,
+				res,
+				user: user?.role,
+			});
 		}
 	}
 
 	public static async removeFromCart(req: Request, res: Response) {
-		if (!req.cookies.userId) {
-			res.status(400).send("User Not Logged In!");
-			httpLogger.log("error", "User Not Logged In", { req, res });
-		}
+		const user = await User.findById(req.cookies.userId).exec();
 		try {
-			const user = await User.findById(req.cookies.userId).exec();
 			const product = await Product.findOne({
 				id: req.params.productId,
 			}).exec();
@@ -67,23 +89,41 @@ export default class CartController {
 					cart?.products.splice(index, 1);
 					await cart?.save();
 					res.send(`Product Id: ${product.id} Removed From Cart`);
-					httpLogger.log("info", "Item Deleted", { req, res });
-				} else {
-					res.status(406);
-					res.send("No such product on cart");
-					httpLogger.log("error", "No such product on cart", {
+
+					httpLogger.log("info", {
+						message: "Product Remove From Cart",
+						user: user?.role,
 						req,
 						res,
 					});
+				} else {
+					res.status(406).send("No such product on cart");
+					httpLogger.log("error", {
+						message: "Product Not Found On Cart",
+						req,
+						res,
+						user: user?.role,
+					});
 				}
 			} else {
-				res.status(404);
-				res.send(`Product with id ${req.params.productId} Not Found`);
-				httpLogger.log("error", "Product not found", { req, res });
+				res.status(404).send(
+					`Product with id ${req.params.productId} Not Found`
+				);
+				httpLogger.log("error", {
+					message: "Product Not Found!",
+					req,
+					res,
+					user: user?.role,
+				});
 			}
 		} catch (err) {
 			console.error(err);
-			httpLogger.log("error", (err as Error).message, { req, res });
+			httpLogger.log("error", {
+				message: (err as Error).message,
+				req,
+				res,
+				user: user?.role,
+			});
 		}
 	}
 }

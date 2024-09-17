@@ -18,15 +18,9 @@ export const httpLogger = winston.createLogger({
 	format: combine(
 		timestamp({ format: timestampFormat }),
 		align(),
-		printf(
-			(info) =>
-				`${
-					info.req.socket.remoteAddress ||
-					info.req.headers["x-forwarded-for"]
-				} [${info.timestamp}] ${info.level} ${
-					info.req.method
-				} ${info.req.originalUrl} ${info.res.statusCode} ${info.message}`
-		)
+		printf((info) => {
+			return `[${info.timestamp}] ${info.level}: ${info.user} ${info.req.method} ${info.req.originalUrl} ${info.res.statusCode} ${info.message}`;
+		})
 	),
 
 	transports: [fileRotateTransport],

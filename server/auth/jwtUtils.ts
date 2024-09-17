@@ -21,7 +21,13 @@ export function generateToken(payload: Payload) {
 export function validateToken(req: Request, res: Response, next: NextFunction) {
 	if (!req.cookies.token) {
 		res.status(401).send("User Not Logged In!");
-		httpLogger.log("error", "User Not Logged In", { req, res });
+
+		httpLogger.log("error", {
+			message: "User Not Logged In!",
+			req,
+			res,
+			user: "anonymous",
+		});
 		return;
 	}
 
@@ -38,7 +44,13 @@ export function validateToken(req: Request, res: Response, next: NextFunction) {
 			message: "Invalid Token!",
 			error: (err as Error).message,
 		});
-		httpLogger.log("error", (err as Error).message, { req, res });
+
+		httpLogger.log("error", {
+			message:(err as Error).message,
+			req,
+			res,
+			user: "anonymous",
+		});
 		next(err);
 	}
 }

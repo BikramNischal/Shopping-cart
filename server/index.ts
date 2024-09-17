@@ -45,7 +45,8 @@ const accessLogStream = createStream('access.log', {
 });
 
 // morgan config
-app.use(morgan("tiny", {stream: accessLogStream}));
+const morganFormat = ":date :method :url :status :res[content-length] - :response-time ms";
+app.use(morgan(morganFormat, {stream: accessLogStream}));
 
 
 // app routes 
