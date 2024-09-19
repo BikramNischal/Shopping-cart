@@ -44,6 +44,7 @@ jspm_packages/
 
 # images 
 uploads/*
+!uploads/.gitkeep
 
 # Snowpack dependency directory (https://snowpack.dev/)
 web_modules/
