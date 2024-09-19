@@ -45,6 +45,14 @@ const userRouter = Router();
  *         passwd:
  *           type: string
  *           description: Password for user 
+ *     UserDelete:
+ *       type: object
+ *       required:
+ *         - userId
+ *       properties:
+ *         userId:
+ *           type: string
+ *           description: Id of User to be deleted
  */
 
 /**
@@ -104,6 +112,13 @@ const userRouter = Router();
  *   delete:
  *     summary: Delete the current user
  *     tags: [User]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UserDelete'
+ *  
  *     responses:
  *       200:
  *         description: User with {userId} deleted

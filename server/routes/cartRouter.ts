@@ -5,7 +5,6 @@ import { validateToken } from "../auth/jwtUtils";
 
 const cartRouter = Router();
 
-
 /**
  * @swagger
  * components:
@@ -13,49 +12,49 @@ const cartRouter = Router();
  *     Cart:
  *       type: object
  *       required:
- *         - products 
+ *         - products
  *       properties:
  *         products:
  *           type: array
  *           items:
  *             type: string
- *           description: productId list 
+ *           description: productId list
  *       example:
- *         products: [ 235346635356436,2543505203589, 804385030945] 
- * 
+ *         products: [ 235346635356436,2543505203589, 804385030945]
+ *
  *     ProductReq:
  *       type: object
  *       required:
- *         - productId 
+ *         - productId
  *       properties:
  *         productId:
  *           type: number
- *           description: productId list 
+ *           description: productId list
  *       example:
- *         productId: 2 
+ *         productId: 2
  */
 
 /**
  * @swagger
  * tags:
  *   name: Cart
- *   description: Cart Managing API 
+ *   description: Cart Managing API
  * /user/cart:
  *   get:
- *     summary: Get list of products in cart  
+ *     summary: Get list of products in cart
  *     tags: [Cart]
  *     responses:
  *       200:
- *         description: Product List. 
+ *         description: Product List.
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Cart'
  *       400:
- *         description: User Not Logged In 
+ *         description: User Not Logged In
  *       500:
  *         description: Some server error
- * 
+ *
  * /user/cart/add:
  *   post:
  *     summary: Add items to cart
@@ -65,20 +64,20 @@ const cartRouter = Router();
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/ProductReq' 
+ *             $ref: '#/components/schemas/ProductReq'
  *     responses:
  *       200:
  *         description: Product successfully add to cart
  *       400:
- *         description: User Not Logged in 
+ *         description: User Not Logged in
  *       404:
  *         description: Product Not Found For Given Id
  *       500:
  *         description: Some server error
- * 
+ *
  * /user/cart/delete/{productId}:
  *   delete:
- *     summary: Delete product from cart 
+ *     summary: Delete product from cart
  *     tags: [Cart]
  *     parameters:
  *      - in: path
@@ -91,58 +90,60 @@ const cartRouter = Router();
  *       200:
  *         description: Product successfully deleted from cart
  *       400:
- *         description: User Not Logged in 
+ *         description: User Not Logged in
  *       404:
  *         description: Product Not Found For Given Id
  *       406:
- *         description: No such product in cart 
+ *         description: No such product in cart
  *       500:
  *         description: Some server error
- * 
+ *
  * /user/cart/checkout/details:
  *   get:
- *     summary: List of checkout items 
+ *     summary: List of checkout items
  *     tags: [Cart]
  *     responses:
  *       200:
- *         description: List of checkout products 
+ *         description: List of checkout products
  *         content:
  *           application/json:
  *             schema:
  *               type: array
- *               items: string 
+ *               items: string
  *         example: [34324234,324234234,345345345]
- * 
+ *
  *       400:
- *         description: User Not Logged in 
+ *         description: User Not Logged in
  *       500:
  *         description: Some server error
- * 
+ *
  * /user/cart/checkout:
  *   post:
- *     summary: Checkout all items in cart 
+ *     summary: Checkout all items in cart
  *     tags: [Cart]
  *     responses:
  *       200:
- *         description: Items add to checkout  
+ *         description: Items add to checkout
  *       400:
- *         description: User Not Logged in 
+ *         description: User Not Logged in
  *       500:
  *         description: Some server error
  *
  *
  */
 
-cartRouter.use(validateToken);
+cartRouter.get("/", validateToken, CartController.cartList);
 
-cartRouter.get("/",CartController.cartList);
+cartRouter.post("/add", validateToken, CartController.addToCart);
 
-cartRouter.post("/add", CartController.addToCart);
+cartRouter.delete(
+	"/delete/:productId",
+	validateToken,
+	CartController.removeFromCart
+);
 
-cartRouter.delete("/delete/:productId", CartController.removeFromCart);
+cartRouter.get("/checkout/details", validateToken, UserController.checkoutList);
 
-cartRouter.get("/checkout/details", UserController.checkoutList);
-
-cartRouter.post("/checkout",UserController.checkout);
+cartRouter.post("/checkout", validateToken, UserController.checkout);
 
 export default cartRouter;

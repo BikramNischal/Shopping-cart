@@ -3,7 +3,6 @@ import { Cart } from "../models/cart";
 import { Request, Response } from "express";
 import { httpLogger } from "../logger/logger";
 import { generateToken, validateToken } from "../auth/jwtUtils";
-import { JwtPayload } from "jsonwebtoken";
 
 export default class UserController {
 	// create user with given name
@@ -13,7 +12,7 @@ export default class UserController {
 			const newUser = new User({
 				name: req.body.username,
 				passwd: req.body.passwd,
-				role: req.body.role ?? "user",
+				role: req.body.role.toLowerCase() ?? "user",
 				cartId: newUserCart._id,
 				checkouts: [],
 			});
@@ -36,8 +35,8 @@ export default class UserController {
 				role: newUser.role,
 			});
 
-			res.cookie("token", token);
-			res.cookie("userId", newUser._id);
+			res.cookie("token", token, { maxAge: 12 * 60 * 60 * 1000 });
+			res.cookie("userId", newUser._id, { maxAge: 12 * 60 * 60 * 1000 });
 			res.json(newUser);
 
 			httpLogger.log("info", {
@@ -61,23 +60,37 @@ export default class UserController {
 	// delete user with given id
 	public static async deleteUser(req: Request, res: Response) {
 		const user = await User.findById(req.cookies.userId).exec();
-		try {
-			// delete cart associated with the user
-			await Cart.findByIdAndDelete(user?.cartId);
-			// delete user
-			await User.findByIdAndDelete(req.cookies.userId).exec();
-			res.clearCookie("userId");
-			res.clearCookie("token");
-			res.send(`User ${user?._id} deleted`);
-			httpLogger.log("info", {
-				message: "User Deleted",
-				user: user?.role,
-				req,
-				res,
+
+		if (user?.role === "admin") {
+			try {
+				const userToDelete = await User.findById(req.body.userId);
+				// delete cart associated with the user
+				await Cart.findByIdAndDelete(userToDelete?.cartId).exec();
+				// delete user
+				await User.findByIdAndDelete(req.body.userId).exec();
+				res.send(`User ${userToDelete?._id} deleted`);
+
+				httpLogger.log("info", {
+					message: `User ${userToDelete?._id} Deleted`,
+					user: user?.role,
+					req,
+					res,
+				});
+			} catch (err) {
+				httpLogger.log("error", {
+					message: (err as Error).message,
+					req,
+					res,
+					user: user?.role,
+				});
+			}
+		} else {
+			res.status(403).json({
+				message: "Forbidden Operation: Not Enough Permission!",
 			});
-		} catch (err) {
+
 			httpLogger.log("error", {
-				message: (err as Error).message,
+				message: "Forbidden Operation: Not Enough Permission!",
 				req,
 				res,
 				user: user?.role,
@@ -92,11 +105,11 @@ export default class UserController {
 		if (user?.role.toLowerCase() !== "admin") {
 			res.status(403).json({
 				success: false,
-				message: "Insufficient Permission!",
+				message: "Access Denied: Insufficient Permission!",
 			});
 
 			httpLogger.log("error", {
-				message: "Insufficient Permission!",
+				message: "Access Denied: Insufficient Permission!",
 				req,
 				res,
 				user: user?.role,
@@ -164,8 +177,10 @@ export default class UserController {
 						id: user._id,
 						role: user.role,
 					});
-					res.cookie("token", token);
-					res.cookie("userId", user._id);
+					res.cookie("token", token, { maxAge: 12 * 60 * 60 * 1000 });
+					res.cookie("userId", user._id, {
+						maxAge: 12 * 60 * 60 * 1000,
+					});
 					res.json({
 						success: true,
 						message: "Login Successful!",

@@ -3,60 +3,70 @@
         "id": 1,
         "name": "Apple iPhone 14",
         "details": "Latest Apple iPhone with A15 Bionic chip, 6.1-inch display, and dual-camera system.",
-        "price": 1100
+        "price": 1100,
+        "tags": ["smartphone", "Apple", "A15"]
     },
     {
         "id": 2,
         "name": "Samsung Galaxy S23",
         "details": "Flagship Samsung smartphone with Snapdragon 8 Gen 2 processor and 120Hz AMOLED display.",
-        "price": 1200
+        "price": 1200,
+        "tags": ["smartphone", "Samsung", "Snapdragon"]
     },
     {
         "id": 3,
         "name": "Sony WH-1000XM5",
         "details": "Sony's premium noise-canceling wireless headphones with up to 30 hours of battery life.",
-        "price": 350
+        "price": 350,
+        "tags": ["headphones", "Sony", "noise-canceling"]
     },
     {
         "id": 4,
         "name": "Dell XPS 13",
         "details": "Ultra-thin and lightweight laptop with 13.4-inch FHD+ display and Intel Core i7 processor.",
-        "price": 1400
+        "price": 1400,
+        "tags": ["laptop", "Dell", "i7"]
     },
     {
         "id": 5,
         "name": "Apple MacBook Pro 16",
         "details": "Powerful Apple laptop with M1 Pro chip, 16-inch Retina display, and 1TB SSD.",
-        "price": 2500
+        "price": 2500,
+        "tags": ["laptop", "Apple", "M1 Pro"]
     },
     {
         "id": 6,
         "name": "Bose QuietComfort 45",
         "details": "High-quality noise-canceling headphones with 24-hour battery life and Bluetooth connectivity.",
-        "price": 329
+        "price": 329,
+        "tags": ["headphones", "Bose", "noise-canceling"]
     },
     {
         "id": 7,
         "name": "Nintendo Switch OLED",
         "details": "Hybrid gaming console with a 7-inch OLED display and improved audio.",
-        "price": 350
+        "price": 350,
+        "tags": ["gaming", "Nintendo", "OLED"]
     },
     {
         "id": 8,
         "name": "GoPro HERO11 Black",
         "details": "Rugged action camera with 5.3K video recording, waterproof design, and stabilization.",
-        "price": 499
+        "price": 499,
+        "tags": ["camera", "GoPro", "waterproof"]
     },
     {
         "id": 9,
         "name": "Dyson V15 Detect",
         "details": "High-end cordless vacuum with laser dust detection and up to 60 minutes of runtime.",
-        "price": 700
+        "price": 700,
+        "tags": ["vacuum", "Dyson", "cordless"]
     },
     {
         "id": 10,
         "name": "Sony PlayStation 5",
         "details": "Next-gen gaming console with 825GB SSD, ray tracing, and haptic feedback controllers.",
-        "price": 499
+        "price": 499,
+        "tags": ["gaming", "console", "Sony"]
     }
 ]

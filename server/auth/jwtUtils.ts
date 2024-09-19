@@ -10,7 +10,7 @@ export interface Payload {
 }
 
 const options = {
-	expiresIn: "3h",
+	expiresIn: "12h",
 };
 
 export function generateToken(payload: Payload) {
@@ -36,7 +36,7 @@ export function validateToken(req: Request, res: Response, next: NextFunction) {
 			req.cookies.token,
 			process.env.JWT_SECRET as string
 		) as JwtPayload;
-		res.cookie("userId", payload.id);
+		res.cookie("userId", payload.id, { maxAge: 12 * 60 * 60 * 1000 });
 		next();
 	} catch (err) {
 		res.status(401).json({
@@ -46,7 +46,7 @@ export function validateToken(req: Request, res: Response, next: NextFunction) {
 		});
 
 		httpLogger.log("error", {
-			message:(err as Error).message,
+			message: (err as Error).message,
 			req,
 			res,
 			user: "anonymous",
