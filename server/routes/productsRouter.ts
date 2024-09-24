@@ -224,4 +224,8 @@ productRouter.post(
 productRouter.get("/filter/mostviewed", ProductController.getMostViewed);
 
 productRouter.get("/filter/mostliked", ProductController.getMostLiked);
+
+productRouter.get("/filter/price", ProductController.filterByPrice);
+
+
 export default productRouter;

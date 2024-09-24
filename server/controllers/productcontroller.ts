@@ -1,7 +1,6 @@
 import { Product } from "../models/product";
 import { Request, Response } from "express";
 import { httpLogger } from "../logger/logger";
-import { User } from "../models/user";
 import { Image } from "../models/image";
 import LikeController from "./likesController";
 import ViewController from "./viewsController";
@@ -293,7 +292,7 @@ export default class ProductController {
 		res.json(products);
 
 		httpLogger.log("info", {
-			message: "Filter Product: Most Viewed",
+			message: "Product List: Most Viewed",
 			userid: req.cookies.userId,
 			req,
 			res,
@@ -306,8 +305,23 @@ export default class ProductController {
 
 		const products = await LikeController.mostLiked();
 		res.json(products);
+
 		httpLogger.log("info", {
-			message: "Filter Product: Most Liked",
+			message: "Product List: Most Liked",
+			userid: req.cookies.userId,
+			req,
+			res,
+			user: userAgent,
+		});
+	}
+
+	public static async filterByPrice(req: Request, res: Response){
+		const userAgent = getUserAgent(req);
+		const products = await Product.find().sort({price: -1}).exec();
+		res.status(200).json(products)
+
+		httpLogger.log("info", {
+			message: "Product: By Price",
 			userid: req.cookies.userId,
 			req,
 			res,
