@@ -1,31 +1,33 @@
 import { Request, Response } from "express";
 import { User } from "../models/user";
-import { Cart } from "../models/cart";
+import { Wishlist } from "../models/wishlist";
 import { Product } from "../models/product";
 import { httpLogger } from "../logger/logger";
 
-// return cart list
-export default class CartController {
-	public static async cartList(req: Request, res: Response) {
+// return wishlist list
+export default class WishlistController {
+	public static async wishlist(req: Request, res: Response) {
 		const user = await User.findById(req.cookies.userId).exec();
-
 		try {
-			const cart = await Cart.findById(user?.cartId)
+			const wishlist = await Wishlist.findOne({
+				userId: user?._id,
+			})
 				.populate("products")
 				.exec();
-			res.json(cart?.products);
+
+			res.json(wishlist ? wishlist.products : []);
 
 			httpLogger.log("info", {
 				message: "Success",
-				userid: req.cookies.userId,
 				user: user?.role,
+				userid: user?._id,
 				req,
 				res,
 			});
 		} catch (err) {
 			httpLogger.log("error", {
 				message: (err as Error).message,
-				userid: req.cookies.userId,
+				userid: user?._id,
 				req,
 				res,
 				user: user?.role,
@@ -33,35 +35,43 @@ export default class CartController {
 		}
 	}
 
-	public static async addToCart(req: Request, res: Response) {
+	public static async addToWishlist(req: Request, res: Response) {
 		const user = await User.findById(req.cookies.userId).exec();
+
 		try {
 			const product = await Product.findOne({
 				id: req.body.productId,
 			}).exec();
 
-			if (user && product) {
-				const cart = await Cart.findById(user.cartId).exec();
-				if (cart) {
-					cart.products.push(product._id);
-					await cart.save();
-
-					res.send(`product id : ${product.id} is added to cart`);
-					httpLogger.log("info", {
-						message: "Product Added To Cart",
-						userid: req.cookies.userId,
-						user: user?.role,
-						req,
-						res,
+			if (product) {
+				const wishlist = await Wishlist.findOne({
+					userId: user?._id,
+				}).exec();
+				if (wishlist) {
+					wishlist.products.push(product._id);
+					await wishlist.save();
+				} else {
+					const wishlist = new Wishlist({
+						userId: req.cookies.userId,
+						products: [product._id],
 					});
+					await wishlist.save();
 				}
+				res.send(`product id : ${product.id} is added to wishlist`);
+				httpLogger.log("info", {
+					message: "Product Added To Wishlist",
+					userid: user?._id,
+					user: user?.role,
+					req,
+					res,
+				});
 			} else {
 				const msg = user ? "Product Not Found" : "User Not Found!";
 				res.status(404).send(msg);
 
 				httpLogger.log("error", {
 					message: msg,
-					userid: req.cookies.userId,
+					userid: user?._id,
 					req,
 					res,
 					user: user?.role,
@@ -70,7 +80,7 @@ export default class CartController {
 		} catch (err) {
 			httpLogger.log("error", {
 				message: (err as Error).message,
-				userid: req.cookies.userId,
+				userid: user?._id,
 				req,
 				res,
 				user: user?.role,
@@ -78,7 +88,7 @@ export default class CartController {
 		}
 	}
 
-	public static async removeFromCart(req: Request, res: Response) {
+	public static async removeFromWishlist(req: Request, res: Response) {
 		const user = await User.findById(req.cookies.userId).exec();
 		try {
 			const product = await Product.findOne({
@@ -86,28 +96,31 @@ export default class CartController {
 			}).exec();
 
 			if (user && product) {
-				const cart = await Cart.findById(user.cartId).exec();
-				const index: number = cart?.products.indexOf(
+				const wishlist = await Wishlist.findOne({
+					userId: user._id,
+				}).exec();
+				const index: number = wishlist?.products.indexOf(
 					product._id
 				) as number;
 
 				if (index >= 0) {
-					cart?.products.splice(index, 1);
-					await cart?.save();
-					res.send(`Product Id: ${product.id} Removed From Cart`);
+					wishlist?.products.splice(index, 1);
+					await wishlist?.save();
+
+					res.send(`Product Id: ${product.id} Removed From wishlist`);
 
 					httpLogger.log("info", {
-						userid: req.cookies.userId,
-						message: "Product Remove From Cart",
+						message: "Product Remove From wishlist",
+						userid: user?._id,
 						user: user?.role,
 						req,
 						res,
 					});
 				} else {
-					res.status(406).send("No such product on cart");
+					res.status(406).send("No such product on wishlist");
 					httpLogger.log("error", {
-						message: "Product Not Found On Cart",
-						userid: req.cookies.userId,
+						message: "Product Not Found On wishlist",
+						userid: user?._id,
 						req,
 						res,
 						user: user?.role,
@@ -119,7 +132,7 @@ export default class CartController {
 				);
 				httpLogger.log("error", {
 					message: "Product Not Found!",
-					userid: req.cookies.userId,
+					userid: user?._id,
 					req,
 					res,
 					user: user?.role,
@@ -129,7 +142,7 @@ export default class CartController {
 			console.error(err);
 			httpLogger.log("error", {
 				message: (err as Error).message,
-				userid: req.cookies.userId,
+				userid: user?._id,
 				req,
 				res,
 				user: user?.role,

@@ -3,6 +3,8 @@ import { Cart } from "../models/cart";
 import { Request, Response } from "express";
 import { httpLogger } from "../logger/logger";
 import { generateToken, validateToken } from "../auth/jwtUtils";
+import { Wishlist } from "../models/wishlist";
+import { getUserAgent } from "../utils/userAgent";
 
 export default class UserController {
 	// create user with given name
@@ -23,7 +25,8 @@ export default class UserController {
 				await newUser.save();
 			} catch (err) {
 				httpLogger.log("error", {
-					message: err.message as string,
+					message: err.message as string,	
+					userid: "anonymous",
 					req,
 					res,
 					user: newUser.role,
@@ -41,6 +44,7 @@ export default class UserController {
 
 			httpLogger.log("info", {
 				message: "User Created",
+				userid: newUser._id,
 				user: newUser.role,
 				req,
 				res,
@@ -50,6 +54,7 @@ export default class UserController {
 
 			httpLogger.log("error", {
 				message: "Username or Password not defined!",
+				userid: "anonymous",
 				req,
 				res,
 				user: "anonymous",
@@ -66,6 +71,10 @@ export default class UserController {
 				const userToDelete = await User.findById(req.body.userId);
 				// delete cart associated with the user
 				await Cart.findByIdAndDelete(userToDelete?.cartId).exec();
+
+				//delete wishlist associated with the user
+				await Wishlist.findOneAndDelete({userId: userToDelete?._id});
+
 				// delete user
 				await User.findByIdAndDelete(req.body.userId).exec();
 				res.send(`User ${userToDelete?._id} deleted`);
@@ -73,12 +82,14 @@ export default class UserController {
 				httpLogger.log("info", {
 					message: `User ${userToDelete?._id} Deleted`,
 					user: user?.role,
+					userid: req.cookies.userId, 
 					req,
 					res,
 				});
 			} catch (err) {
 				httpLogger.log("error", {
 					message: (err as Error).message,
+					userid: req.cookies.userId, 
 					req,
 					res,
 					user: user?.role,
@@ -91,6 +102,7 @@ export default class UserController {
 
 			httpLogger.log("error", {
 				message: "Forbidden Operation: Not Enough Permission!",
+				userid: req.cookies.userId, 
 				req,
 				res,
 				user: user?.role,
@@ -110,6 +122,7 @@ export default class UserController {
 
 			httpLogger.log("error", {
 				message: "Access Denied: Insufficient Permission!",
+				userid: req.cookies.userId, 
 				req,
 				res,
 				user: user?.role,
@@ -122,6 +135,7 @@ export default class UserController {
 			res.json(users);
 			httpLogger.log("info", {
 				message: "Success",
+				userid: req.cookies.userId, 
 				user: user?.role,
 				req,
 				res,
@@ -138,9 +152,7 @@ export default class UserController {
 
 	// get user details
 	public static async userDetails(req: Request, res: Response) {
-		const user =
-			(await User.findById(req.cookies.userId).exec())?.role ??
-			"anonymous";
+		const user = await getUserAgent(req);
 
 		try {
 			const userData = await User.findById(req.cookies.userId)
@@ -152,6 +164,7 @@ export default class UserController {
 
 			httpLogger.log("info", {
 				message: "Success",
+				userid: req.cookies.userId, 
 				user: user,
 				req,
 				res,
@@ -159,6 +172,7 @@ export default class UserController {
 		} catch (err) {
 			httpLogger.log("error", {
 				message: (err as Error).message,
+				userid: req.cookies.userId, 
 				req,
 				res,
 				user: user,
@@ -189,6 +203,7 @@ export default class UserController {
 					httpLogger.log("info", {
 						message: "User Login Successful",
 						user: user.role,
+						userid: "anonymous", 
 						req,
 						res,
 					});
@@ -199,6 +214,7 @@ export default class UserController {
 					});
 					httpLogger.log("error", {
 						message: "Incorrect password!",
+						userid: "anonymous", 
 						req,
 						res,
 						user: user.role,
@@ -208,6 +224,7 @@ export default class UserController {
 				res.status(404).send(`User: ${req.body.username} Not Found!`);
 				httpLogger.log("error", {
 					message: "User Not Found!",
+					userid: "anonymous", 
 					req,
 					res,
 					user: "anonymous",
@@ -216,6 +233,7 @@ export default class UserController {
 		} catch (err) {
 			httpLogger.log("error", {
 				message: "User Not Found!",
+				userid: "anonymous", 
 				req,
 				res,
 				user: user?.role ?? "anonymous",
@@ -233,6 +251,7 @@ export default class UserController {
 
 		httpLogger.log("info", {
 			message: "User Logout Successful",
+			userid: user?._id,
 			user: user?.role,
 			req,
 			res,
@@ -261,6 +280,7 @@ export default class UserController {
 				httpLogger.log("info", {
 					message: "Success",
 					user: user?.role,
+					userid: req.cookies.userId,
 					req,
 					res,
 				});
@@ -268,6 +288,7 @@ export default class UserController {
 				res.send("No items in cart to checkout!");
 				httpLogger.log("warn", {
 					message: "Warning",
+					userid: req.cookies.userId,
 					user: user?.role,
 					req,
 					res,
@@ -278,6 +299,7 @@ export default class UserController {
 
 			httpLogger.log("error", {
 				message: "User Not Found!",
+				userid: req.cookies.userId,
 				req,
 				res,
 				user: user?.role ?? "anonymous",
@@ -287,9 +309,7 @@ export default class UserController {
 
 	// return a detail list of all products in checkouts
 	public static async checkoutList(req: Request, res: Response) {
-		const user =
-			(await User.findById(req.cookies.userId).exec())?.role ??
-			"anonymous";
+		const user = await getUserAgent(req);
 
 		try {
 			const userData = await User.findById(req.cookies.userId)
@@ -299,6 +319,7 @@ export default class UserController {
 
 			httpLogger.log("info", {
 				message: "Success",
+				userid: req.cookies.userId,
 				user: user,
 				req,
 				res,
@@ -306,6 +327,7 @@ export default class UserController {
 		} catch (err) {
 			httpLogger.log("error", {
 				message: "User Not Found!",
+				userid: req.cookies.userId,
 				req,
 				res,
 				user: user,

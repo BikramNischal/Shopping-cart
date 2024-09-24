@@ -2,6 +2,7 @@ import { Router } from "express";
 import ProductController from "../controllers/productcontroller";
 import { validateToken } from "../auth/jwtUtils";
 import { upload } from "../utils/multerConfig";
+import CommentController from "../controllers/commentController";
 
 const productRouter = Router();
 
@@ -20,25 +21,25 @@ const productRouter = Router();
  *       properties:
  *         id:
  *           type: number
- *           description: provide by admin for navigation 
+ *           description: provide by admin for navigation
  *         name:
  *           type: string
- *           description: name of you product 
+ *           description: name of you product
  *         details:
  *           type: string
- *           description: description of the prodcut 
+ *           description: description of the prodcut
  *         price:
  *           type: number
- *           description: price of the product 
+ *           description: price of the product
  *         tags:
  *           type: array
  *           items:
  *             type: string
- *           description: keywords for product 
+ *           description: keywords for product
  *       example:
  *         id: 1
- *         name: keyboard 
- *         details: mechanical keyboard with blue switch 
+ *         name: keyboard
+ *         details: mechanical keyboard with blue switch
  *         price: 5000
  *         tags: ["keyboard", "mechanical"]
  *     Search:
@@ -54,24 +55,24 @@ const productRouter = Router();
  * @swagger
  * tags:
  *   name: Products
- *   description: Products Managing API 
+ *   description: Products Managing API
  * /products:
  *   get:
- *     summary: Get Products List 
+ *     summary: Get Products List
  *     tags: [Products]
  *     responses:
  *       200:
- *         description: Product List. 
+ *         description: Product List.
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Product'
  *       500:
  *         description: Some server error
- * 
+ *
  * /products/{productId}:
  *   get:
- *     summary: Get Product Details for given id 
+ *     summary: Get Product Details for given id
  *     tags: [Products]
  *     parameters:
  *       - in: path
@@ -82,7 +83,7 @@ const productRouter = Router();
  *         description: product id
  *     responses:
  *       200:
- *         description: Product Details. 
+ *         description: Product Details.
  *         content:
  *           application/json:
  *             schema:
@@ -91,10 +92,10 @@ const productRouter = Router();
  *         description: Product Not Found For Given Id
  *       500:
  *         description: Some server error
- * 
+ *
  * /products/create:
  *   post:
- *     summary: Create New Product 
+ *     summary: Create New Product
  *     tags: [Products]
  *     requestBody:
  *       required: true
@@ -104,19 +105,19 @@ const productRouter = Router();
  *             $ref: '#/components/schemas/Product'
  *     responses:
  *       200:
- *         description: Product Details. 
+ *         description: Product Details.
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Product'
  *       403:
- *         description: Permission Denied 
+ *         description: Permission Denied
  *       500:
  *         description: Some server error
  *
  * /products/search:
  *   post:
- *     summary: Search Product for given keyword 
+ *     summary: Search Product for given keyword
  *     tags: [Products]
  *     requestBody:
  *       required: true
@@ -126,7 +127,7 @@ const productRouter = Router();
  *             $ref: '#/components/schemas/Search'
  *     responses:
  *       200:
- *         description: Product Details. 
+ *         description: Product Details.
  *         content:
  *           application/json:
  *             schema:
@@ -135,10 +136,10 @@ const productRouter = Router();
  *         description: Product Not Found For Given keyword
  *       500:
  *         description: Some server error
- * 
+ *
  * /products/addimage/{productId}:
  *   post:
- *     summary: Search Product for given keyword 
+ *     summary: Search Product for given keyword
  *     tags: [Products]
  *     parameters:
  *       - in: path
@@ -164,7 +165,7 @@ const productRouter = Router();
  *             format: binary
  *     responses:
  *       200:
- *         description: Product Details. 
+ *         description: Product Details.
  *         content:
  *           application/json:
  *             schema:
@@ -179,10 +180,10 @@ const productRouter = Router();
  *                     description: request status
  *                   message:
  *                     type: string
- *                     description: request status message 
- * 
+ *                     description: request status message
+ *
  *       403:
- *         description: Permission Denied 
+ *         description: Permission Denied
  *       500:
  *         description: Some server error
  *
@@ -191,13 +192,36 @@ const productRouter = Router();
 
 productRouter.get("/", ProductController.products);
 
-productRouter.get("/:productId", ProductController.productDetail);
+productRouter.get(
+	"/:productId",
+	validateToken,
+	ProductController.productDetail
+);
 
-productRouter.post("/create", validateToken, ProductController.createProduct)
+productRouter.post("/create", validateToken, ProductController.createProduct);
 
 productRouter.post("/search", ProductController.search);
 
-productRouter.post("/addimage/:productId", upload.single("image"), ProductController.addImage);
+productRouter.post(
+	"/addimage/:productId",
+	validateToken,
+	upload.single("image"),
+	ProductController.addImage
+);
 
+productRouter.get(
+	"/:productId/like",
+	validateToken,
+	ProductController.addLike
+);
 
+productRouter.post(
+	"/:productId/comment",
+	validateToken,
+	CommentController.createComment
+);
+
+productRouter.get("/filter/mostviewed", ProductController.getMostViewed);
+
+productRouter.get("/filter/mostliked", ProductController.getMostLiked);
 export default productRouter;

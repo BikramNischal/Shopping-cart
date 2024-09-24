@@ -15,7 +15,8 @@ import { specs } from "./utils/swagger";
 import productRouter from "./routes/productsRouter";
 import userRouter from "./routes/userRouter";
 import cartRouter from "./routes/cartRouter";
-import { upload } from "./utils/multerConfig";
+import wishlistRouter from "./routes/wishlistRouter";
+
 
 mongoose.set("strictQuery", false);
 
@@ -48,14 +49,10 @@ const morganFormat =
 app.use(morgan(morganFormat, { stream: accessLogStream }));
 
 // app routes
-// app.post("/uploads", upload.single("image"), (req, res) => {
-// 	console.log(req.file?.filename);
-// 	res.send("Hello World");
-// })
-
 app.use("/products", productRouter);
 app.use("/user", userRouter);
 app.use("/user/cart", cartRouter);
+app.use("/user/wishlist", wishlistRouter);
 
 app.use(
 	"/api/docs",

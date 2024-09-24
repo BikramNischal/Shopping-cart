@@ -3,13 +3,15 @@ import { Request, Response } from "express";
 import { httpLogger } from "../logger/logger";
 import { User } from "../models/user";
 import { Image } from "../models/image";
+import LikeController from "./likesController";
+import ViewController from "./viewsController";
+import { getUserAgent } from "../utils/userAgent";
+import CommentController from "./commentController";
 
 export default class ProductController {
 	// create new product
 	public static async createProduct(req: Request, res: Response) {
-		const userAgent: string = req.cookies.userId
-			? ((await User.findById(req.cookies.userId).exec())?.role as string)
-			: "anonymous";
+		const userAgent: string = await getUserAgent(req);
 
 		if (userAgent === "admin") {
 			try {
@@ -21,6 +23,8 @@ export default class ProductController {
 					tags: req.body.tags,
 				});
 
+				await ViewController.createView(req, res, newProduct._id);
+				await LikeController.createLike(req, res, newProduct._id);
 				await newProduct.save();
 
 				res.status(200).json({
@@ -30,9 +34,10 @@ export default class ProductController {
 				});
 				httpLogger.log("info", {
 					message: "New Product Created",
+					userid: req.cookies.userId,
+					user: userAgent,
 					req,
 					res,
-					userAgent,
 				});
 			} catch (err) {
 				res.status(500).json({
@@ -41,6 +46,7 @@ export default class ProductController {
 				});
 				httpLogger.log("error", {
 					message: err.message as string,
+					userid: req.cookies.userId,
 					req,
 					res,
 					userAgent,
@@ -54,6 +60,7 @@ export default class ProductController {
 
 			httpLogger.log("error", {
 				message: "Forbidden Operation: Not Enough Permission",
+				userid: req.cookies.userId,
 				req,
 				res,
 				userAgent,
@@ -63,15 +70,14 @@ export default class ProductController {
 
 	//returns a list of products
 	public static async products(req: Request, res: Response) {
-		const userAgent: string = req.cookies.userId
-			? ((await User.findById(req.cookies.userId).exec())?.role as string)
-			: "anonymous";
+		const userAgent: string = await getUserAgent(req);
 		try {
 			const products = await Product.find().exec();
 			res.json(products);
 			httpLogger.log("info", {
 				message: "Success",
 				user: userAgent,
+				userid: req.cookies.userId,
 				req,
 				res,
 			});
@@ -82,6 +88,7 @@ export default class ProductController {
 			});
 			httpLogger.log("error", {
 				message: err.message as string,
+				userid: req.cookies.userId,
 				req,
 				res,
 				userAgent,
@@ -91,18 +98,36 @@ export default class ProductController {
 
 	// returns product details for :productId
 	public static async productDetail(req: Request, res: Response) {
-		const userAgent = req.cookies.userId
-			? (await User.findById(req.cookies.userId).exec())?.role
-			: "anonymous";
+		const userAgent: string = await getUserAgent(req);
 		try {
 			const product = await Product.findOne({
 				id: req.params.productId,
 			}).exec();
 
+			if (await ViewController.chekcViews(product?._id!)) {
+				ViewController.addView(product?._id!, req.cookies.userId);
+			} else {
+				await ViewController.createView(req, res, product?._id!);
+			}
+
 			if (product) {
 				const images = (await Image.findOne({ productId: product._id }))
 					?.images;
-				res.json({product, images: images });
+				res.json({
+					product,
+					images: images,
+					views: await ViewController.getViews(product?._id!),
+					likes: await LikeController?.getLikes(product?._id!),
+					comments: await CommentController.getComments(product?._id),
+				});
+
+				httpLogger.log("info", {
+					message: `Product Details ID: ${product?._id} `,
+					user: userAgent,
+					userid: req.cookies.userId,
+					req,
+					res,
+				});
 			} else {
 				res.status(404).send(
 					`Product with Id: ${req.params.productId} Not Found`
@@ -111,15 +136,9 @@ export default class ProductController {
 					message: `Product ${req.params.productId} Not Found`,
 					req,
 					res,
-					userAgent,
+					user: userAgent,
 				});
 			}
-			httpLogger.log("info", {
-				message: "Success",
-				user: userAgent,
-				req,
-				res,
-			});
 		} catch (err) {
 			res.status(500).json({
 				success: false,
@@ -127,18 +146,17 @@ export default class ProductController {
 			});
 			httpLogger.log("error", {
 				message: err.message as string,
+				userid: req.cookies.userId,
 				req,
 				res,
-				userAgent,
+				user: userAgent,
 			});
 		}
 	}
 
 	// returns products with matching keywords
 	public static async search(req: Request, res: Response) {
-		const userAgent = req.cookies.userId
-			? (await User.findById(req.cookies.userId).exec())?.role
-			: "anonymous";
+		const userAgent: string = await getUserAgent(req);
 
 		try {
 			const products = await Product.find({
@@ -148,9 +166,10 @@ export default class ProductController {
 			res.json({ success: true, products });
 			httpLogger.log("info", {
 				message: "Success",
+				userid: req.cookies.userId,
 				req,
 				res,
-				userAgent,
+				user: userAgent,
 			});
 		} catch (err) {
 			res.status(500).json({
@@ -159,18 +178,17 @@ export default class ProductController {
 			});
 			httpLogger.log("error", {
 				message: (err as Error).message,
+				userid: req.cookies.userId,
 				req,
 				res,
-				userAgent,
+				user: userAgent,
 			});
 		}
 	}
 
 	//upload images to product
 	public static async addImage(req: Request, res: Response) {
-		const userAgent = req.cookies.userId
-			? (await User.findById(req.cookies.userId).exec())?.role
-			: "anonymous";
+		const userAgent: string = await getUserAgent(req);
 
 		if (userAgent === "admin") {
 			try {
@@ -198,9 +216,10 @@ export default class ProductController {
 				});
 				httpLogger.log("info", {
 					message: `Image Add To Product: ${product?._id}`,
+					userid: req.cookies.userId,
 					req,
 					res,
-					userAgent,
+					user: userAgent,
 				});
 			} catch (err) {
 				res.status(500).json({
@@ -209,9 +228,10 @@ export default class ProductController {
 				});
 				httpLogger.log("error", {
 					message: (err as Error).message,
+					userid: req.cookies.userId,
 					req,
 					res,
-					userAgent,
+					user: userAgent,
 				});
 			}
 		} else {
@@ -222,10 +242,76 @@ export default class ProductController {
 
 			httpLogger.log("error", {
 				message: "Forbidden Operation: Not Enough Permission",
+				userid: req.cookies.userId,
 				req,
 				res,
-				userAgent,
+				user: userAgent,
 			});
 		}
+	}
+
+	public static async addLike(req: Request, res: Response) {
+		const userAgent: string = await getUserAgent(req);
+		try {
+			const product = await Product.findOne({
+				id: req.params.productId,
+			}).exec();
+
+			if (!(await LikeController.checkLikes(product?._id!))) {
+				await LikeController.createLike(req, res, product?._id!);
+			}
+			const liked = await LikeController.toggleLike(
+				product?._id!,
+				req.cookies.userId
+			);
+
+			res.json({ Liked: liked, Proudct: product?._id });
+
+			httpLogger.log("info", {
+				message: `Liked Product: ${product?._id}`,
+				userid: req.cookies.userId,
+				req,
+				res,
+				user: userAgent,
+			});
+		} catch (err) {
+			console.log(err);
+			httpLogger.log("error", {
+				message: (err as Error).message,
+				userid: req.cookies.userId,
+				req,
+				res,
+				user: userAgent,
+			});
+		}
+	}
+
+	public static async getMostViewed(req: Request, res: Response) {
+		const userAgent = getUserAgent(req);
+
+		const products = await ViewController.mostViewed();
+		res.json(products);
+
+		httpLogger.log("info", {
+			message: "Filter Product: Most Viewed",
+			userid: req.cookies.userId,
+			req,
+			res,
+			user: userAgent,
+		});
+	}
+
+	public static async getMostLiked(req: Request, res: Response) {
+		const userAgent = getUserAgent(req);
+
+		const products = await LikeController.mostLiked();
+		res.json(products);
+		httpLogger.log("info", {
+			message: "Filter Product: Most Liked",
+			userid: req.cookies.userId,
+			req,
+			res,
+			user: userAgent,
+		});
 	}
 }

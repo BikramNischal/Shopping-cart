@@ -19,7 +19,7 @@ export const httpLogger = winston.createLogger({
 		timestamp({ format: timestampFormat }),
 		align(),
 		printf((info) => {
-			return `[${info.timestamp}] ${info.level}: ${info.user} ${info.req.method} ${info.req.originalUrl} ${info.res.statusCode} ${info.message}`;
+			return `[${info.timestamp}] ${info.level}: [${info.user}:${info.userid}] ${info.req.method} ${info.req.originalUrl} ${info.res.statusCode} ${info.message}`;
 		})
 	),
 
