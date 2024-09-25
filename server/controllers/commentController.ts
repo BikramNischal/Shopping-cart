@@ -3,7 +3,7 @@ import { Request, Response } from "express";
 import { Product } from "../models/product";
 import { getUserAgent } from "../utils/userAgent";
 import { httpLogger } from "../logger/logger";
-import {Types} from "mongoose";
+import { Types } from "mongoose";
 
 export default class CommentController {
 	public static async createComment(req: Request, res: Response) {
@@ -27,7 +27,7 @@ export default class CommentController {
 			httpLogger.log("info", {
 				message: `${req.cookies.userId} Commented On ${product?._id}`,
 				user: userAgent,
-                userid: req.cookies.userId,
+				userid: req.cookies.userId,
 				req,
 				res,
 			});
@@ -35,15 +35,17 @@ export default class CommentController {
 			httpLogger.log("error", {
 				message: (err as Error).message,
 				user: userAgent,
-                userid: req.cookies.userId,
+				userid: req.cookies.userId,
 				req,
 				res,
 			});
 		}
 	}
 
-    public static async getComments(productId: Types.ObjectId){
-        const comments = await Comment.find({productId: productId}).exec(); 
-        return comments ;
-    }
+	public static async getComments(productId: Types.ObjectId) {
+		const comments = await Comment.find({ productId: productId })
+			.select(["comment", "userId"])
+			.exec();
+		return comments;
+	}
 }

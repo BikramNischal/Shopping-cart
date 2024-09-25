@@ -63,11 +63,13 @@ export default class ViewController {
 		return views?.viewsCount;
 	}
 
-	public static async mostViewed() {
+	public static async mostViewed(offset:number, limit:number) {
 		const products = await View.find()
-			.sort({ viewsCount: -1 })
+			.sort({ viewsCount: -1, productId: 1 })
 			.select(["productId", "viewsCount"])
 			.populate("productId")
+			.skip(offset)
+			.limit(limit)
 			.exec();
 		return products;
 	}

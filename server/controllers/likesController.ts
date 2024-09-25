@@ -73,11 +73,13 @@ export default class LikeController {
 		return views?.likeCount;
 	}
 
-	public static async mostLiked() {
+	public static async mostLiked(offset: number, limit:number) {
 		const products = await Like.find()
-			.sort({ likeCount: -1 })
+			.sort({ likeCount: -1, productId: 1 })
 			.select(["productId", "likeCount"])
 			.populate("productId")
+			.skip(offset)
+			.limit(limit)
 			.exec();
 		return products;
 	}

@@ -6,7 +6,7 @@ import LikeController from "./likesController";
 import ViewController from "./viewsController";
 import { getUserAgent } from "../utils/userAgent";
 import CommentController from "./commentController";
-
+import { getPaginate } from "../utils/pagination";
 export default class ProductController {
 	// create new product
 	public static async createProduct(req: Request, res: Response) {
@@ -71,8 +71,18 @@ export default class ProductController {
 	public static async products(req: Request, res: Response) {
 		const userAgent: string = await getUserAgent(req);
 		try {
-			const products = await Product.find().exec();
-			res.json(products);
+			const paginate = await getPaginate(req);
+			const products = await Product.find()
+				.sort({ id: 1 })
+				.skip(paginate.offset)
+				.limit(paginate.limit)
+				.exec();
+			res.json({
+				products,
+				page: paginate.page,
+				count: paginate.limit,
+				totalPage: paginate.totalPage,
+			});
 			httpLogger.log("info", {
 				message: "Success",
 				user: userAgent,
@@ -287,45 +297,101 @@ export default class ProductController {
 
 	public static async getMostViewed(req: Request, res: Response) {
 		const userAgent = getUserAgent(req);
+		try {
+			const paginate = await getPaginate(req);
+			const products = await ViewController.mostViewed(
+				paginate.offset,
+				paginate.limit
+			);
+			res.status(200).json({
+				products,
+				page: paginate.page,
+				count: paginate.limit,
+				totalPage: paginate.totalPage,
+			});
 
-		const products = await ViewController.mostViewed();
-		res.json(products);
-
-		httpLogger.log("info", {
-			message: "Product List: Most Viewed",
-			userid: req.cookies.userId,
-			req,
-			res,
-			user: userAgent,
-		});
+			httpLogger.log("info", {
+				message: "Product List: Most Viewed",
+				userid: req.cookies.userId,
+				req,
+				res,
+				user: userAgent,
+			});
+		} catch (err) {
+			httpLogger.log("error", {
+				message: (err as Error).message,
+				userid: req.cookies.userId ?? "anonymous",
+				req,
+				res,
+				user: userAgent,
+			});
+		}
 	}
 
 	public static async getMostLiked(req: Request, res: Response) {
 		const userAgent = getUserAgent(req);
+		try {
+			const paginate = await getPaginate(req);
+			const products = await LikeController.mostLiked(
+				paginate.offset,
+				paginate.limit
+			);
+			res.status(200).json({
+				products,
+				page: paginate.page,
+				count: paginate.limit,
+				totalPage: paginate.totalPage,
+			});
 
-		const products = await LikeController.mostLiked();
-		res.json(products);
-
-		httpLogger.log("info", {
-			message: "Product List: Most Liked",
-			userid: req.cookies.userId,
-			req,
-			res,
-			user: userAgent,
-		});
+			httpLogger.log("info", {
+				message: "Product List: Most Liked",
+				userid: req.cookies.userId,
+				req,
+				res,
+				user: userAgent,
+			});
+		} catch (err) {
+			httpLogger.log("error", {
+				message: (err as Error).message,
+				userid: req.cookies.userId ?? "anonymous",
+				req,
+				res,
+				user: userAgent,
+			});
+		}
 	}
 
-	public static async filterByPrice(req: Request, res: Response){
+	public static async filterByPrice(req: Request, res: Response) {
 		const userAgent = getUserAgent(req);
-		const products = await Product.find().sort({price: -1}).exec();
-		res.status(200).json(products)
+		try {
+			const paginate = await getPaginate(req);
+			const products = await Product.find()
+				.sort({ price: -1, id: 1 })
+				.skip(paginate.offset)
+				.limit(paginate.limit)
+				.exec();
+			res.status(200).json({
+				products,
+				page: paginate.page,
+				count: paginate.limit,
+				totalPage: paginate.totalPage
+			});
 
-		httpLogger.log("info", {
-			message: "Product: By Price",
-			userid: req.cookies.userId,
-			req,
-			res,
-			user: userAgent,
-		});
+			httpLogger.log("info", {
+				message: "Product: By Price",
+				userid: req.cookies.userId,
+				req,
+				res,
+				user: userAgent,
+			});
+		} catch (err) {
+			httpLogger.log("error", {
+				message: (err as Error).message,
+				userid: req.cookies.userId ?? "anonymous",
+				req,
+				res,
+				user: userAgent,
+			});
+		}
 	}
 }
