@@ -1,7 +1,7 @@
 import { Router } from "express";
 import ProductController from "../controllers/productcontroller";
 import { validateToken } from "../auth/jwtUtils";
-import { upload } from "../utils/multerConfig";
+import { upload } from "../config/multerConfig";
 import CommentController from "../controllers/commentController";
 
 const productRouter = Router();

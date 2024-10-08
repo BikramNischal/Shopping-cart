@@ -5,7 +5,7 @@ import { httpLogger } from "../logger/logger";
 
 export interface Payload {
 	username: string;
-	id: Types.ObjectId;
+	id: Types.ObjectId | string;
 	role: string;
 }
 

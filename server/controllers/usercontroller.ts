@@ -2,9 +2,10 @@ import { User } from "../models/user";
 import { Cart } from "../models/cart";
 import { Request, Response } from "express";
 import { httpLogger } from "../logger/logger";
-import { generateToken, validateToken } from "../auth/jwtUtils";
+import { generateToken } from "../auth/jwtUtils";
 import { Wishlist } from "../models/wishlist";
 import { getUserAgent } from "../utils/userAgent";
+import AccountActivityController from "./accountActivityController";
 
 export default class UserController {
 	// create user with given name
@@ -25,7 +26,7 @@ export default class UserController {
 				await newUser.save();
 			} catch (err) {
 				httpLogger.log("error", {
-					message: err.message as string,	
+					message: err.message as string,
 					userid: "anonymous",
 					req,
 					res,
@@ -73,7 +74,7 @@ export default class UserController {
 				await Cart.findByIdAndDelete(userToDelete?.cartId).exec();
 
 				//delete wishlist associated with the user
-				await Wishlist.findOneAndDelete({userId: userToDelete?._id});
+				await Wishlist.findOneAndDelete({ userId: userToDelete?._id });
 
 				// delete user
 				await User.findByIdAndDelete(req.body.userId).exec();
@@ -82,14 +83,14 @@ export default class UserController {
 				httpLogger.log("info", {
 					message: `User ${userToDelete?._id} Deleted`,
 					user: user?.role,
-					userid: req.cookies.userId, 
+					userid: req.cookies.userId,
 					req,
 					res,
 				});
 			} catch (err) {
 				httpLogger.log("error", {
 					message: (err as Error).message,
-					userid: req.cookies.userId, 
+					userid: req.cookies.userId,
 					req,
 					res,
 					user: user?.role,
@@ -102,7 +103,7 @@ export default class UserController {
 
 			httpLogger.log("error", {
 				message: "Forbidden Operation: Not Enough Permission!",
-				userid: req.cookies.userId, 
+				userid: req.cookies.userId,
 				req,
 				res,
 				user: user?.role,
@@ -122,7 +123,7 @@ export default class UserController {
 
 			httpLogger.log("error", {
 				message: "Access Denied: Insufficient Permission!",
-				userid: req.cookies.userId, 
+				userid: req.cookies.userId,
 				req,
 				res,
 				user: user?.role,
@@ -135,7 +136,7 @@ export default class UserController {
 			res.json(users);
 			httpLogger.log("info", {
 				message: "Success",
-				userid: req.cookies.userId, 
+				userid: req.cookies.userId,
 				user: user?.role,
 				req,
 				res,
@@ -164,7 +165,7 @@ export default class UserController {
 
 			httpLogger.log("info", {
 				message: "Success",
-				userid: req.cookies.userId, 
+				userid: req.cookies.userId,
 				user: user,
 				req,
 				res,
@@ -172,7 +173,7 @@ export default class UserController {
 		} catch (err) {
 			httpLogger.log("error", {
 				message: (err as Error).message,
-				userid: req.cookies.userId, 
+				userid: req.cookies.userId,
 				req,
 				res,
 				user: user,
@@ -182,10 +183,33 @@ export default class UserController {
 
 	// user login and add cookie entry for user
 	public static async userLogin(req: Request, res: Response) {
-		const user = await User.findOne({ name: req.body.username }).exec();
 		try {
+			const user = await User.findOne({
+				name: req.body.username,
+			}).exec();
+
 			if (user) {
-				if (req.body.passwd === user.passwd) {
+				let accessAccount =
+					await AccountActivityController.getAccountActivity(
+						user._id
+					);
+				if (accessAccount && !accessAccount.active) {
+					res.status(401).json({
+						success: false,
+						message: "Account Locked!",
+					});
+
+					httpLogger.log("error", {
+						message: "Account Locked",
+						user: user.role,
+						userid: user._id,
+						req,
+						res,
+					});
+					return;
+				}
+
+				if (user.passwd === req.body.passwd) {
 					const token = generateToken({
 						username: user.name,
 						id: user._id,
@@ -195,7 +219,14 @@ export default class UserController {
 					res.cookie("userId", user._id, {
 						maxAge: 12 * 60 * 60 * 1000,
 					});
-					res.json({
+
+					// reset previous failed login attempts 
+					if (accessAccount)
+						AccountActivityController.resetAttempts(
+							accessAccount._id
+						);
+
+					res.status(200).json({
 						success: true,
 						message: "Login Successful!",
 					});
@@ -203,28 +234,43 @@ export default class UserController {
 					httpLogger.log("info", {
 						message: "User Login Successful",
 						user: user.role,
-						userid: "anonymous", 
+						userid: user._id,
 						req,
 						res,
 					});
 				} else {
-					res.status(400).json({
-						success: false,
-						message: "Incorrect password!",
-					});
-					httpLogger.log("error", {
-						message: "Incorrect password!",
-						userid: "anonymous", 
-						req,
-						res,
-						user: user.role,
-					});
+					let accountActivity =
+						(await AccountActivityController.getAccountActivity(
+							user._id
+						)) ??
+						(await AccountActivityController.createActivity(
+							user._id
+						));
+
+					if (accountActivity?.attempts! > 2) {
+						await AccountActivityController.lockAccount(
+							accountActivity?._id!
+						);
+						res.status(401).json({
+							success: false,
+							message:
+								"Incorrect Password: Exceeded Maximum Attempts - Account Locked!",
+						});
+					} else {
+						await AccountActivityController.incrementAttempt(
+							accountActivity?._id!
+						);
+						res.status(401).json({
+							success: false,
+							message: "Incorrect Password",
+						});
+					}
 				}
 			} else {
-				res.status(404).send(`User: ${req.body.username} Not Found!`);
+				res.status(404).send("User Not Found");
 				httpLogger.log("error", {
 					message: "User Not Found!",
-					userid: "anonymous", 
+					userid: "anonymous",
 					req,
 					res,
 					user: "anonymous",
@@ -232,12 +278,72 @@ export default class UserController {
 			}
 		} catch (err) {
 			httpLogger.log("error", {
-				message: "User Not Found!",
-				userid: "anonymous", 
+				message: (err as Error).message,
+				userid: "anonymous",
 				req,
 				res,
-				user: user?.role ?? "anonymous",
+				user: "anonymous",
 			});
+		}
+	}
+
+	//get otp
+	public static async getOtp(req: Request, res: Response) {
+		try {
+			const user = await User.findOne({ name: req.body.username }).exec();
+			if (user) {
+				const accountActivity =
+					await AccountActivityController.getAccountActivity(
+						user._id
+					);
+				if (accountActivity && !accountActivity.active) {
+					const otp = await AccountActivityController.getOtp(
+						accountActivity._id
+					);
+					res.status(200).json({
+						success: true,
+						message: `Your OTP is ${otp}`,
+					});
+				} else {
+					res.status(200).json({
+						success: true,
+						message: `Your Account is not locked`,
+					});
+				}
+			}
+		} catch (err) {
+			console.log((err as Error).message);
+		}
+	}
+
+	//unlock account
+	public static async unlockUser(req: Request, res: Response) {
+		try {
+			const user = await User.findOne({ name: req.body.username }).exec();
+			if (user) {
+				const unclocked = await AccountActivityController.unlockAccount(
+					user._id,
+					req.body.otp
+				);
+				if (unclocked) {
+					res.status(200).json({
+						success: true,
+						message: "Account Unlocked!",
+					});
+				} else {
+					res.status(401).json({
+						success: false,
+						message: "Incorrect Otp",
+					});
+				}
+			} else {
+				res.status(401).json({
+					success: false,
+					message: "User Not Found",
+				});
+			}
+		} catch (err) {
+			console.log((err as Error).message);
 		}
 	}
 

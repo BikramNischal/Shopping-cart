@@ -163,6 +163,10 @@ userRouter.post("/create", UserController.createUser);
 
 userRouter.post("/login", UserController.userLogin);
 
+userRouter.post("/unlock", UserController.unlockUser);
+
+userRouter.post("/otp", UserController.getOtp);
+
 userRouter.use(validateToken);
 
 userRouter.get("/", UserController.userList);
@@ -172,5 +176,6 @@ userRouter.get("/details", UserController.userDetails);
 userRouter.get("/logout", UserController.userLogout);
 
 userRouter.delete("/delete", UserController.deleteUser);
+
 
 export default userRouter;
